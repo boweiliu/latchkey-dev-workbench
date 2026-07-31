@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>name</key><string>Set Up Minds Printing</string>
+  <key>type</key><string>Window Settings</string>
+  <key>ProfileCurrentVersion</key><real>2.06</real>
+  <key>RunCommandAsShell</key><true/>
+  <key>CommandString</key><string>/bin/sh "$HOME/tmp/minds_data/printbridge/bootstrap.sh"</string>
+</dict>
+</plist>
