@@ -5,6 +5,39 @@ permission catalog) and testing it live on the user's Mac, driven from a Minds
 agent container. This doc is the reproducible record: what works, exactly what we
 changed, and every tool/automation we built to do it.
 
+## Upstreaming (the hot-mod is a dev shortcut — land THREE PRs)
+
+The live-gateway hot-mods here (bundle patch, uv-cache catalog/schema patches)
+are reverted by any Minds app update. To ship a service durably, submit three
+PRs in dependency order:
+
+1. **Detent** — the scope schema (`<svc>-api` + read/write + granular per-resource
+   permissions). Must land first: a grant referencing a scope Detent can't resolve
+   bricks the agent's entire permission evaluation. Reference: `imbue-ai/detent#22`
+   (ngrok — includes evidence that ngrok is RESTful so method-based read/write is
+   correct, plus granular `ngrok-read/write-credentials` for authtoken minting).
+2. **latchkey** — the connector `src/services/<svc>.ts` + registration.
+   Reference: `imbue-ai/latchkey#113`.
+3. **mngr** (`mngr_latchkey`) — the catalog: `services.json` regenerates from
+   Detent via `generate_services_json.py` (+ curated display name); a service with
+   no Detent schema goes in `additional_services.json` instead (which supplies the
+   inline scope schema). Reference: `imbue-ai/mngr-internal#235`. `mngr-catalog.patch`
+   here carries the change.
+
+Then Minds bumps the Latchkey/Detent dependency and the service ships clean.
+
+## Managing a credential from the agent side (no Connectors UI)
+
+The gateway's credential-store encryption key is an on-disk file
+(`~/.minds/latchkey/encryption_key`, 0600), NOT the macOS Keychain — deliberately,
+to avoid a Keychain prompt. So an agent (via the bridge) can read it and run
+`latchkey auth clear|browser <svc>` against the real store
+(`LATCHKEY_DIRECTORY=~/.minds/latchkey`, `LATCHKEY_ENCRYPTION_KEY=$(cat that file)`,
+`LATCHKEY_GATEWAY*` unset). The gateway reads the store per-request, so it takes
+effect immediately — no restart. `tools/manage_credential.sh` wraps clear /
+re-mint. (A bare CLI run without that env falls through to the Keychain and fails
+with "the encryption key may have changed" — that's the tell.)
+
 ---
 
 ## Current status (2026-07-30)

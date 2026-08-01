@@ -10,6 +10,28 @@ restart-durable connector on a real Minds gateway.
 > gateway-minted authtoken, and everything survives an app restart. See
 > **[PROGRESS.md](./PROGRESS.md)** for the full build journal.
 
+## Upstreaming — the hot-mod is a DEV shortcut; a service needs THREE PRs
+
+Everything the workbench does on a running gateway (patching the bundle, uv-cache
+catalog patches, the shared-schemas write) is a **development hot-patch** that a
+Minds app update reverts. To land a service for real, submit three PRs, in this
+dependency order (the worked ngrok example is linked as a reference):
+
+1. **Detent** — the permission *scope schema* (`<svc>-api` + read/write + any
+   granular per-resource permissions). This is the source the catalog is
+   generated from, and a grant with no Detent schema **bricks the agent's whole
+   permission set**, so it must land first. Example: `imbue-ai/detent#22`.
+2. **latchkey** — the *connector* (`src/services/<svc>.ts` + registration): URL
+   match, credential injection, the browser login. Example: `imbue-ai/latchkey#113`.
+3. **mngr** (`mngr_latchkey`) — the *catalog*: `services.json` regenerates from
+   Detent (`generate_services_json.py`), plus a curated display name; custom
+   services with no Detent schema instead go in `additional_services.json`.
+   Example: `imbue-ai/mngr-internal#235`.
+
+Then the Minds side bumps the Latchkey/Detent dependency and the service ships
+with no hot-patching. See `mngr-catalog.patch` and PROGRESS.md's "Upstreaming"
+section.
+
 ## What's here
 
 | Path | What |
