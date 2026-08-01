@@ -2,7 +2,7 @@
 title: Latchkey Dev Workbench
 description: Toolkit and playbook for building and live-testing a custom latchkey connector (with a Playwright browser-login flow) from a Minds agent, including how to hot-mod a running Minds gateway to prove it end-to-end.
 thumbnail: inspiration-latchkey-dev-workbench.svg
-version: v2
+version: v3
 format: v1
 ---
 
@@ -101,7 +101,7 @@ the rest of the tooling exists to install and prove.
 
 ## Recipe
 
-This inspiration is version `v2` (front-matter `version:`).
+This inspiration is version `v3` (front-matter `version:`).
 It is not a fork of the workspace it came from -- it is DERIVED from it by the
 recipe below: include these paths, leave these out, apply these
 published-version rules. An update re-runs the recipe against the current
@@ -111,7 +111,7 @@ block is the durable home of that recipe -- a later update reads it back from
 here.
 
 ```yaml
-version: v2
+version: v3
 include:
   - .agents/skills/latchkey-dev-workbench
 data_include: []
@@ -208,6 +208,8 @@ This is distinct from "Adaptation history" below, which is the ADOPTERS' log.
 ### v1 (2026-07-30) -- initial workbench: ngrok connector + bridge/deskrun tooling + self-restart loop + hot-mod playbook
 
 ### v2 (2026-07-31) -- docs: the hot-mod is a dev shortcut needing three upstream PRs (Detent -> latchkey -> mngr); added agent-side credential clear/re-mint via the on-disk encryption key (new `tools/manage_credential.sh`)
+
+### v3 (2026-07-31) -- ngrok scopes verified against the full ngrok OpenAPI surface (241 ops) and trimmed to the useful set (dropped api_keys granularity); catalog snippet updated to the real 4-permission entry
 
 ## Adaptation history
 

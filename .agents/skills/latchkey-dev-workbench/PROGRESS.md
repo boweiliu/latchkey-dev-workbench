@@ -16,6 +16,18 @@ PRs in dependency order:
    bricks the agent's entire permission evaluation. Reference: `imbue-ai/detent#22`
    (ngrok — includes evidence that ngrok is RESTful so method-based read/write is
    correct, plus granular `ngrok-read/write-credentials` for authtoken minting).
+   **Verify the scopes against the service's real API surface, don't theorize.**
+   For ngrok this meant driving Detent's own matcher over every operation in the
+   official OpenAPI spec (`ngrok/ngrok-openapi`, 241 ops): every GET is a read and
+   every POST/PUT/PATCH/DELETE a write (zero side-effecting GETs), so method-based
+   read/write is exactly right; each granular scope matches exactly its intended
+   endpoints; and the `^`-anchored `/credentials` path correctly rejects the
+   lookalike `/ssh_credentials`. That evidence also drove trimming the set to the
+   **useful** scopes: `ngrok-api` + read/write-all + read/write-credentials. An
+   earlier `read/write-api-keys` pair was dropped — managing API keys isn't an
+   agent runtime action (the connector mints its key once via the browser login),
+   and it's already covered by write-all. Keep scopes reflecting real use, not
+   symmetry.
 2. **latchkey** — the connector `src/services/<svc>.ts` + registration.
    Reference: `imbue-ai/latchkey#113`.
 3. **mngr** (`mngr_latchkey`) — the catalog: `services.json` regenerates from
