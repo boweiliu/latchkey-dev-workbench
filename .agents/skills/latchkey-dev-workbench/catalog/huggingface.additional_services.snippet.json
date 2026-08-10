@@ -1,0 +1,18 @@
+{
+  "huggingface": {
+    "display_name": "Hugging Face",
+    "base_api_url": "https://huggingface.co/",
+    "scope": {
+      "name": "huggingface-api",
+      "schema": {
+        "properties": {
+          "domain": { "pattern": "^(huggingface\\.co|router\\.huggingface\\.co)$" }
+        },
+        "required": ["domain"]
+      }
+    },
+    "permissions": [
+      { "name": "everything", "description": "Full read access to the Hugging Face Hub and Inference APIs.", "schema": {} }
+    ]
+  }
+}
