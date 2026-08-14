@@ -8,7 +8,7 @@ step runs on.
 
 ---
 
-## The step that's easy to skip: map the live web flow first
+## The step that's easy to skip: map the live web flow first (and classify the session type)
 
 You cannot write correct Playwright selectors for the connector's login/mint
 flow without first driving the service's *live* pages and reading them. Do this
@@ -26,6 +26,13 @@ as its own step, **before** writing `services/<svc>.ts`:
 - **Prefer locale-independent selectors** (form-scoped `button[type=submit]`,
   `input[name=...]`), not text like `hasText: 'Create token'` — latchkey's
   `AGENTS.md` requires it.
+- **Classify the connector's session type while you recon.** If the service
+  needs a real browser login (a `BrowserFollowupServiceSession` — `linear`,
+  `dropbox`, `github`, `ngrok`, `todoist`, ...), it **must be added to the
+  recordings blacklist** or the browser-login recording leaks the minted
+  credential. ngrok was initially missing, wrongly reverted, then re-added — the
+  revert is the easy mistake; re-add it. Map every connector's session type
+  before you decide; don't blacklist only the ones you happen to remember.
 - **Scope every Playwright locator by accessible name, never a bare
   `[role="dialog"]` or generic role.** A bare role on a heavy client-rendered
   page can match several elements at once — a hidden leftover verify-email
@@ -35,6 +42,13 @@ as its own step, **before** writing `services/<svc>.ts`:
 - **Some services reveal the minted key as plain text** (a `<pre>` or span), not
   in an `<input>` — check the recon output before assuming `input[value]`. The
   OpenRouter connector reads the reveal out of the dialog text, not a field.
+- **Bring the login tab to the front before interacting**
+  (`page.bringToFront()`). A browser-followup login page that ends up backgrounded
+  can type into a sudo password prompt or the wrong tab entirely; this is a
+  real wrong-tab UX nit across every browser-followup connector.
+- **Clicks before hydration are no-ops on heavy client-rendered pages** (the
+  keys table on OpenRouter, etc.). Retry-until-open rather than click-once; the
+  first click can land before the listener is attached and silently do nothing.
 
 ## The connector-centric plan (ordered)
 
@@ -52,16 +66,29 @@ as its own step, **before** writing `services/<svc>.ts`:
 5. **Catalog entry** — make the scope requestable (`extensions/services.json`),
    patched durably into uv's cache.
 6. **Hot-mod the live gateway** — patch the compiled connector into the
-   SIP-protected `Minds.app` bundle (from a Terminal-backed tmux session, which
-   inherits the App-Management grant), then reload with `restart_minds.sh`.
+   SIP-protected `Minds.app` bundle. The bridge's launchd helper **lacks** the
+   App-Management TCC grant, so `cp`/`deskrun` directly into the bundle gets
+   "Operation not permitted." Run the patch+restart script in **Terminal.app via
+   `osascript`** (Terminal has the App-Management grant) — not a bridge-driven
+   tmux session — then reload with `restart_minds.sh`.
 7. **Request → approve → verify** — request the scope, approve (browser login
-   mints the sealed credential), then verify with `latchkey curl`.
+   mints the sealed credential), then verify with `latchkey curl`. **File the
+   request *after* the gateway has fully recovered from any restart, not
+   before** — a Minds restart wipes pending permission requests, and the mint
+   then silently fails (you poll forever, no credential). Also: if the service
+   is a `BrowserFollowupServiceSession`, **add it to the recordings blacklist**
+   in this same step (see the recon note above / SKILL.md), or the login
+   recording leaks the minted credential.
 8. **e2e test** — a real call that proves the point (a `POST` to the service's
    chat/completions or its canonical read endpoint). Have this ready from the
    start; it's the definition of done, not an afterthought.
 9. **Refine scopes** *(if warranted)* — method-based `read`/`write` is correct for
    a RESTful API; add a granular scope only for a distinct/costly action (e.g.
    isolate paid `inference`). Skip per-resource scopes. But:
+   - **The catalog exposes exactly one scope per service** (`additional_services`
+     allows one scope per service), so multi-domain or multi-capability services
+     use **one `<svc>-api` scope with method-constrained *permissions* under it**,
+     not multiple scopes. The constraint forces this design, and it's cleaner.
    - **`read` must include `HEAD` and `OPTIONS`, not just `GET`.** Many download
      clients (e.g. `huggingface_hub`) issue a `HEAD resolve/...` before every
      download; a `read = method:GET` scope blocks it and a read-only grant can't
@@ -97,7 +124,7 @@ has to be patched into the Mac bundle, not something container-local.
 | Map the live web flow (recon) | **Here** (browser fleet / local CDP) | You drive it; operator hands off for sign-in |
 | Write + compile the connector | **Here** (or a Mac checkout) | Code work in the repo |
 | Detent schema + catalog content | authored **here**, applied on **Mac** | uv cache lives at `~/.minds/.uv-cache` on the Mac |
-| Patch the app bundle + restart Minds | **Mac** (bridge, Terminal-tmux) | Bundle is the SIP/App-Management-protected `Minds.app` |
+| Patch the app bundle + restart Minds | **Mac** (bridge → `osascript` into Terminal.app) | Bundle is SIP/App-Management-protected; the bridge's launchd helper lacks the grant, so escalate via Terminal.app |
 | Request the scope | **Here** (`latchkey curl`) | Container talks to the gateway |
 | Approve + browser mint | **Mac** (Minds opens the login browser) | Runtime login is Mac-side |
 | Verify `latchkey curl` / e2e | **Here** | Gateway injects the sealed credential |
@@ -115,6 +142,15 @@ to `~/tmp/minds_data` (the file-sharing grant) then `deskrun cp`.
 - **Schema-before-grant, and revoke-before-schema-swap.** A grant referencing a
   missing/removed scope schema bricks every permission. To change a live scope,
   revoke the old grant first.
+- **SIP bundle writes need `osascript` into Terminal.app, not a bridge-driven
+  tmux.** The bridge's launchd helper lacks the App-Management TCC grant, so
+  `cp`/`deskrun` directly into `Minds.app` gets "Operation not permitted." Run
+  the patch+restart script in Terminal.app via `osascript` (Terminal has the
+  grant). An older version of this playbook said the bridge's Terminal-backed
+  tmux inherits App Management — it does not; that claim was the costly miss.
+- **A Minds restart wipes pending permission requests.** Filing a request right
+  before a restart means it disappears and the mint silently fails (poll
+  forever, no credential). File after the gateway has recovered.
 - **A live hot-mod is a debt that compounds when you walk away.** The durable
   uv-cache patch is exactly what reprovisioned into a broken state days later and
   bricked *every* permission check with `references unknown schema
@@ -142,3 +178,8 @@ to `~/tmp/minds_data` (the file-sharing grant) then `deskrun cp`.
   changelog). The mngr-internal `check-changelog` runs locally; finding the
   filename rule there is far faster than spelunking a CI log through a flaky
   bridge.
+- **`deskrun`/zsh gotchas** (the bridge runs zsh): `unsetopt equals` or zsh
+  eats `=word`; quote parens in `echo` or trigger a glob error; `node`/`tmux`
+  need `zsh -lc` or absolute paths; the workspace hook blocks `head`/`tail`
+  even inside uploaded scripts; and `deskrun` times out after ~60s, so split
+  long CI poll-loops into shorter calls.
