@@ -276,7 +276,7 @@ def test_dockerignore_is_symlink_to_gitignore() -> None:
 # the reader off them. The counts stay ratcheted (not path-exempted) so a term
 # creeping into any *other* live prose still fails.
 
-_LIVE_PROSE_EXEMPT_PARTS = frozenset({"changelog", "blueprint", "specs", "vendor"})
+_LIVE_PROSE_EXEMPT_PARTS = frozenset({"changelog", "blueprint", "specs", "vendor", "build-journal"})
 
 
 def _live_prose_files() -> list[Path]:
