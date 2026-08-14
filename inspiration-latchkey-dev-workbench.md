@@ -2,7 +2,7 @@
 title: Latchkey Dev Workbench
 description: Toolkit and playbook for building and live-testing a custom latchkey connector (with a Playwright browser-login flow) from a Minds agent, including how to hot-mod a running Minds gateway to prove it end-to-end.
 thumbnail: inspiration-latchkey-dev-workbench.svg
-version: v3
+version: v4
 format: v1
 ---
 
@@ -53,15 +53,28 @@ no supervisord programs, no ports, and no `forward_port.py` registration. It is
 a bundle of code templates, tooling scripts, and documentation that an agent
 reads and runs on demand. Its contents:
 
-- `SKILL.md` -- the quick index and entry point.
+- `SKILL.md` -- the quick index and entry point (hard-won lessons: schema
+  before grant; a live hot-mod is a debt that compounds when you walk away;
+  scope selectors by accessible name; `read` must include `HEAD`/`OPTIONS`; the
+  token capability must cover every scope; check CI after opening PRs).
 - `PROGRESS.md` -- the full build journal and reproducible playbook (status
   table, the exact winning changes, the desktop topology, the critical gotchas,
   and the step-by-step procedure for the next connector). Read it first.
 - `README.md` -- the skill's own overview.
-- `services/ngrok.ts` + `docs/ngrok.md` -- the worked-example connector (a
+- `TODO.md` -- open follow-ups (agent self-revoke; a `workbench teardown`
+  command to remove a hot-mod).
+- `docs/connector-build-playbook.md` -- the recon-first playbook (read this
+  before starting a new connector): map the live web flow before writing any
+  selectors, the connector-centric ordered plan, the here-vs-Mac execution
+  split, and the safety notes carried over from hard experience.
+- `services/ngrok.ts` + `docs/ngrok.md` -- the first worked-example connector (a
   latchkey `Service` mirroring the Linear connector) and its usage notes.
-- `catalog/services.json.snippet` + `mngr-catalog.patch` -- the catalog entry
-  and the `additional_services.json` Detent enforcement-schema change.
+- `services/huggingface.ts` + `catalog/huggingface.*` -- a **second** worked
+  example (multi-domain Hub + inference router; a `write` token backing
+  read/write/inference scopes; granular method-constrained permissions under
+  one `huggingface-api` scope), plus the matching catalog snippets.
+- `catalog/services.json.snippet` + `mngr-catalog.patch` -- the ngrok catalog
+  entry and the `additional_services.json` Detent enforcement-schema change.
 - `bridge/` -- a file-share shell channel to the developer's Mac (a launchd
   helper, `com.minds.printbridge`, that polls a `cmd/` inbox roughly once a
   second and writes results to `cmd_done/`; `agent.sh`/`core.src.sh`/
@@ -81,6 +94,14 @@ reads and runs on demand. Its contents:
   patching every cached build in uv's archive cache (the reprovision source),
   not the installed output.
 - `tools/patch_wheel.py` -- an earlier approach that patched the bundled wheel.
+- `tools/manage_credential.sh` -- clear or re-mint a latchkey credential from
+  the agent side (no Connectors UI, no gateway restart), using the on-disk
+  encryption key.
+- `tools/patch_bundle_hf.js` + `tools/patch_hf_catalog_schema.py` +
+  `tools/patch_hf_granular.py` -- the HuggingFace-specific bundle/catalog/schema
+  patch scripts (the HF analogue of `patch_ngrok.js` + `patch_catalog_uv_cache.sh`).
+  Per-service copies of the same logic; a parameterized `patch_bundle.js
+  <service>` / `patch_catalog.py <service>` is a tracked TODO.
 
 How the pieces wire together at *use* time (there is no runtime service): the
 agent installs the bridge on the Mac, then uses `bin/deskrun` (through the
@@ -111,7 +132,7 @@ block is the durable home of that recipe -- a later update reads it back from
 here.
 
 ```yaml
-version: v3
+version: v4
 include:
   - .agents/skills/latchkey-dev-workbench
 data_include: []
@@ -210,6 +231,32 @@ This is distinct from "Adaptation history" below, which is the ADOPTERS' log.
 ### v2 (2026-07-31) -- docs: the hot-mod is a dev shortcut needing three upstream PRs (Detent -> latchkey -> mngr); added agent-side credential clear/re-mint via the on-disk encryption key (new `tools/manage_credential.sh`)
 
 ### v3 (2026-07-31) -- ngrok scopes verified against the full ngrok OpenAPI surface (241 ops) and trimmed to the useful set (dropped api_keys granularity); catalog snippet updated to the real 4-permission entry
+
+### v4 (2026-08-14) -- playbook + second worked example (HuggingFace); lessons from the build journal folded into the skill
+
+Adds the **recon-first connector-build playbook** (`docs/connector-build-playbook.md`)
+and **HuggingFace as a second worked example** (`services/huggingface.ts` +
+`catalog/huggingface.*` + the HF bundle/catalog/schema patch tools), plus a
+`docs/build-journal/` historical record and source-citation metadata. The
+skill's `SKILL.md` lessons and the playbook now carry the hard-won lessons
+from the build journal: a live hot-mod is a debt that drifts and bricks days
+later (remove it after proving live); scope selectors by accessible name not
+bare role; `read` must include `HEAD`/`OPTIONS` (download clients issue a HEAD
+before GET); some APIs do reads via POST; multi-domain services need a
+`pattern`/`enum` on `domain`; the token capability must cover every granted
+scope; check CI after opening PRs and run repo gates locally; **prefer
+isolated-gateway e2e over hot-modding the workspace gateway** (entry 07);
+**ship a data-driven scope coverage regression test** driving Detent's real
+matcher over the full OpenAPI inventory (entry 07); **a raw bearer handed to
+the container bypasses Detent** (entry 06); **session-riding connectors**
+(store cookies, mint short-lived bearer, `refreshCredentials` null = re-login,
+entry 06); plain Chrome may be blocked (use Fortress/Brave, entry 06);
+`checkApiCredentials` must use a full URL (entry 07); self-review before
+replying to review comments (entry 07); granular scopes from the service's OAuth
+taxonomy (entry 07). The manifest's `include` list is unchanged (still just
+`.agents/skills/latchkey-dev-workbench`); this version documents contents the
+v3 manifest didn't list and folds in the new playbook + HF example + the
+DocuSign/Tailscale journal entries.
 
 ## Adaptation history
 

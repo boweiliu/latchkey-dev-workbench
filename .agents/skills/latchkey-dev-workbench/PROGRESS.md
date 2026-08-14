@@ -154,9 +154,10 @@ All under this workbench. The Mac steps are macOS-only.
 
 ## Desktop topology (verified, for next time)
 
-- Gateway = app's **bundled** latchkey: `/Applications/Minds.app/Contents/
-  Resources/latchkey/node_modules/latchkey/dist` (SIP-protected; writable only via
-  the tmux trick). Auto-respawns on death (supervisor, same port).
+- Gateway = app's **bundled** latchkey: `Minds.app/Contents/Resources/
+  latchkey/node_modules/latchkey/dist` under the macOS install location (SIP-
+  protected; writable only via the tmux trick). Auto-respawns on death
+  (supervisor, same port).
 - App Python runs from venv `~/.minds/.venv` (python `~/.minds/.uv-python`);
   `mngr_latchkey` installed **from a wheel** `.../Resources/wheels/
   imbue_mngr_latchkey-0.1.6-*.whl`, cached under `~/.minds/.uv-cache`.
