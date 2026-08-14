@@ -56,7 +56,7 @@ for the skill, plus top-level files for the manifest).
 - [L02-2] stale connector template (`ngrok.ts` targets a different latchkey version)
   - fix: SHIPPED (doc) -- `docs/connector-build-playbook.md:56-57` (model on a current in-tree `linear.ts`, not the bundled template)
 - [L02-3] bundle-vs-checkout version skew (`getAccount` missing -> login fails after mint)
-  - fix: SHIPPED -- `services/huggingface.ts:124-125` (`getAccount` added to compile against v3); documented at `docs/connector-build-playbook.md:164-168`
+  - fix: SHIPPED -- `services/huggingface.ts:132-133` (`getAccount` added to compile against v3); documented at `docs/connector-build-playbook.md:164-168`
 - [L02-4] self-inflicted gateway outage (killing `mngr latchkey forward`)
   - fix: SHIPPED (doc) -- `docs/connector-build-playbook.md:140` (reload with `restart_minds.sh`, not the process-kill)
 - [L02-5] brick-avoidance on the scope swap (revoke-first)
