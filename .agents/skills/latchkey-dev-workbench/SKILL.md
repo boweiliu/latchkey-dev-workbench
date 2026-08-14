@@ -45,11 +45,29 @@ critical gotchas, and the reproducible procedure. This file is the quick index.
 
 - **Schema before grant.** Granting a scope with no Detent schema 403s
   *everything* until revoked.
+- **A live hot-mod is a debt that compounds when you walk away.** The durable
+  uv-cache patch can reprovision into a broken state days later and brick *every*
+  permission check with `references unknown schema "#/$defs/<svc>-api"` -- the
+  agent is locked out and only the operator can clear it (revoke the grant).
+  Prove a connector live, then **remove the hot-mod**; the durable path is the
+  three upstream PRs (Detent -> latchkey -> mngr-internal, in that order).
 - **Patch the install source, not the output.** The Minds venv reprovisions the
   catalog + schema from uv's cache on every boot; editing installed files reverts.
 - **`chflags`/immutability is a trap** -- it breaks uv provisioning on boot.
 - **SIP** blocks writing `Minds.app`; a **Terminal-backed tmux** inherits App
   Management and can. Use it to patch the bundle, then restart via the loop above.
+- **Scope selectors by accessible name, not bare `[role="dialog"]`.** A bare role
+  can match a password-manager modal or a leftover dialog and hang strict mode.
+- **`read` scopes must include `HEAD`/`OPTIONS`, not just `GET`.** Download
+  clients issue a `HEAD` before GET; `read = method:GET` blocks them and a
+  read-only grant can't download. Some APIs also do reads via `POST` -- verify
+  against the real API, don't assume REST shape.
+- **The token's capability must cover every scope you grant.** A read-only service
+  token can't back a `-write-all` permission; mint a token type that covers the
+  grant set (e.g. HF `write` token backs read+write+inference).
+- **After opening PRs, check the CI runs** (`gh pr checks`) and run repo gates
+  locally before pushing (latchkey `prettier` on every touched file; the
+  mngr-internal changelog entry named after the branch, not the feature).
 - **Clear / re-mint a credential from the agent side (no Connectors UI).** The
   gateway's credential-store encryption key is NOT in the macOS Keychain -- it's a
   file at `~/.minds/latchkey/encryption_key` (0600), deliberately, to avoid a

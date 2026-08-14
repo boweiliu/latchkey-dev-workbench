@@ -11,3 +11,14 @@
   Motivating case: swapping a service's live scope schema (e.g. coarse `any` ->
   granular read/write) must remove the old grant first, or it dangles and bricks
   the whole permission set. See `docs/huggingface-worklog.md`.
+- **A `workbench teardown` command that removes a hot-mod.** Proving a connector
+  live leaves residue in every uv-cache copy, the materialized gateway files,
+  and the granted permission. Today none of that is cleaned up, so a durable
+  uv-cache patch can reprovision into a broken state days later and brick every
+  permission check (`references unknown schema "#/$defs/<svc>-api"`). A
+  `teardown <svc>` that removes the connector from the bundle `dist`, the
+  catalog/schema from every uv-cache copy, the materialized extensions, and the
+  granted scope would make "prove live, then remove" one command instead of an
+  error-prone manual undo. Motivating case: the ngrok hot-mod bricked the desktop
+  gateway after the operator walked away from it (see
+  `docs/build-journal/01-ngrok-connector-scope-verify-and-trim.md`).

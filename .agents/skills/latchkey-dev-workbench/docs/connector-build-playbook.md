@@ -26,6 +26,15 @@ as its own step, **before** writing `services/<svc>.ts`:
 - **Prefer locale-independent selectors** (form-scoped `button[type=submit]`,
   `input[name=...]`), not text like `hasText: 'Create token'` — latchkey's
   `AGENTS.md` requires it.
+- **Scope every Playwright locator by accessible name, never a bare
+  `[role="dialog"]` or generic role.** A bare role on a heavy client-rendered
+  page can match several elements at once — a hidden leftover verify-email
+  dialog, the real dialog, *and* a password-manager modal (1Password etc.) — and
+  strict mode then hangs with a generic timeout instead of telling you why. The
+  mint-timeout you'll see is the symptom; named scoping is the fix.
+- **Some services reveal the minted key as plain text** (a `<pre>` or span), not
+  in an `<input>` — check the recon output before assuming `input[value]`. The
+  OpenRouter connector reads the reveal out of the dialog text, not a field.
 
 ## The connector-centric plan (ordered)
 
@@ -52,9 +61,30 @@ as its own step, **before** writing `services/<svc>.ts`:
    start; it's the definition of done, not an afterthought.
 9. **Refine scopes** *(if warranted)* — method-based `read`/`write` is correct for
    a RESTful API; add a granular scope only for a distinct/costly action (e.g.
-   isolate paid `inference`). Skip per-resource scopes.
+   isolate paid `inference`). Skip per-resource scopes. But:
+   - **`read` must include `HEAD` and `OPTIONS`, not just `GET`.** Many download
+     clients (e.g. `huggingface_hub`) issue a `HEAD resolve/...` before every
+     download; a `read = method:GET` scope blocks it and a read-only grant can't
+     download the very model it's for. A live `HEAD` returning 403 is the tell.
+   - **Some APIs do reads via `POST`.** (HuggingFace's `paths-info` is a
+     POST-based read.) Method-based classification misses them — enumerate the
+     real operations against the spec, don't assume REST shape.
+   - **Multi-domain services** (e.g. HuggingFace Hub + the inference router) need
+     a `pattern`/`enum` on `domain` in the scope schema, not a single `const`.
+     The ngrok example only showed single-domain `const`; the HF example shows
+     the multi-domain shape.
+   - **The token's capability must cover every scope you grant.** A read-only
+     service token cannot back a `-write-all` permission. For HuggingFace a
+     classic `write` token (read+write+inference) backs all three scopes; a `read`
+     token does not. Mint the token type that covers the grant set.
 10. **Upstream** — Detent scopes PR, latchkey connector PR, mngr-internal catalog
-    PR; then a release + roll-up bump ships it to users.
+    PR; then a release + roll-up bump ships it to users. **After opening the PRs,
+    check the CI runs** (`gh pr checks`) — running the tests locally is not the
+    same, and a red you didn't notice is the most common miss. Run the
+    repo-specific gates locally *before* pushing too: latchkey wants `prettier`
+    on every file your register script touched (not just the connector), and the
+    mngr-internal changelog entry must be named **after the branch**
+    (`<branch>.md`), not the feature.
 
 ## Which steps run here (container) vs. on the Mac (bridge)
 
@@ -85,6 +115,30 @@ to `~/tmp/minds_data` (the file-sharing grant) then `deskrun cp`.
 - **Schema-before-grant, and revoke-before-schema-swap.** A grant referencing a
   missing/removed scope schema bricks every permission. To change a live scope,
   revoke the old grant first.
+- **A live hot-mod is a debt that compounds when you walk away.** The durable
+  uv-cache patch is exactly what reprovisioned into a broken state days later and
+  bricked *every* permission check with `references unknown schema
+  "#/$defs/<svc>-api"` — the agent is locked out and only the operator can clear
+  it (revoke the grant in Connectors). Prove a connector live, then **remove the
+  hot-mod**; the durable path is the three upstream PRs. Leaving a resident
+  hot-mod is asking for exactly this.
 - **Check bundle-vs-checkout version skew** — diff the bundle's
   `dist/src/services/core/base.js` for `this.service.<method>` calls before
-  assuming your checkout's base is authoritative (e.g. v3 requires `getAccount`).
+  assuming your checkout's base is authoritative. The expensive symptom: v3's base
+  calls `this.service.getAccount`, which a v2-modeled connector lacks, so the
+  browser login mints the token and *then* throws `this.service.getAccount is not
+  a function` — you get the mint, fail the save, and the credential never lands.
+
+## Dev-loop accelerators (worth setting up before the first mint)
+
+- **A headless mint harness that pulls the email OTP from Gmail via the latchkey
+  connector.** A fresh-browser login often needs a 6-digit email code a headless
+  browser can't read; fetching it from the user's inbox (read-only Gmail grant)
+  turns a multi-minute human-in-the-loop approve-sign-in-wait loop into a ~30s
+  self-serve one, and surfaces the real strict-mode error the gateway only shows
+  as a generic mint timeout. This was the single biggest iteration-speed unlock
+  on the OpenRouter connector; build it first.
+- **Run repo gates locally before pushing** (prettier, the branch-named
+  changelog). The mngr-internal `check-changelog` runs locally; finding the
+  filename rule there is far faster than spelunking a CI log through a flaky
+  bridge.
