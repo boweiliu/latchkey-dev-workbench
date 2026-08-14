@@ -1,3 +1,10 @@
+---
+source_repo: boweiliu/bowei-thoughts
+source_path: working-sessions/212-huggingface-latchkey-pr-review-and-scope-fixes/session.md
+pulled: verbatim
+modifications: none
+---
+
 # 212 — Hugging Face latchkey: upstream the workbench, then PR review, scope fixes & CI
 
 Continuation of session 209 (the Hugging Face connector build). The connector was

@@ -1,3 +1,10 @@
+---
+source_repo: boweiliu/bowei-thoughts
+source_path: working-sessions/211-openrouter-latchkey-connector-full-session/session.md
+pulled: verbatim
+modifications: none
+---
+
 # 211 — OpenRouter latchkey connector: full session (build → ship → CI-green → verify)
 
 The complete write-up of the OpenRouter connector session. A mid-session cut of the

@@ -1,3 +1,10 @@
+---
+source_repo: boweiliu/bowei-thoughts
+source_path: working-sessions/233-latchkey-hf-connector-write-token-and-detent-note/session.md
+pulled: verbatim
+modifications: none
+---
+
 # Session 233 — Latchkey HF connector: write token, docs boundary note, detent follow-up
 
 A multi-step session: take the promises the operator made in PR-review comments

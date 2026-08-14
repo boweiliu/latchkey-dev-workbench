@@ -69,6 +69,25 @@ hiccups, what's next, reflections, and future improvements.
    lesson: before declaring a revision satisfies a comment, open the file at
    the changed lines and read them cold.
 
+## Source and fidelity
+
+Each entry begins with a YAML metadata block recording where it came from and
+how it was transcribed:
+
+```yaml
+---
+source_repo: boweiliu/bowei-thoughts
+source_path: working-sessions/<NNN>-<slug>/<file>.md
+pulled: verbatim        # verbatim | modified
+modifications: none     # none, or a short note on what changed and roughly how much
+---
+```
+
+All current entries are `pulled: verbatim` / `modifications: none` — copied
+character-for-character from the author's private `boweiliu/bowei-thoughts`
+repo. If a future entry is lightly edited (e.g. to redact a secret or trim a
+tangent), set `pulled: modified` and say what changed in `modifications`.
+
 ## Themes across the entries
 
 - **Verify, never theorize.** Drive Detent's matcher over the service's real

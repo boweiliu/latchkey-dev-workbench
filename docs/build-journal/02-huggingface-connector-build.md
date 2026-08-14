@@ -1,3 +1,10 @@
+---
+source_repo: boweiliu/bowei-thoughts
+source_path: working-sessions/209-huggingface-latchkey-connector/session.md
+pulled: verbatim
+modifications: none
+---
+
 # 209 — Hugging Face latchkey connector: build, seal, refine scopes, upstream
 
 Building Hugging Face as a first-class latchkey service from scratch, driven from

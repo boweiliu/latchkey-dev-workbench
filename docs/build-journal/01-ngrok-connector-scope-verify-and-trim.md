@@ -1,3 +1,10 @@
+---
+source_repo: boweiliu/bowei-thoughts
+source_path: working-sessions/195-ngrok-latchkey-scope-verify-trim/session.md
+pulled: verbatim
+modifications: none
+---
+
 # 195 — ngrok latchkey connector: scope verification, trim, and upstreaming
 
 Continuation of the ngrok-latchkey work. A connector + three upstream PRs +
