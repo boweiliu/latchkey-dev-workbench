@@ -3,8 +3,10 @@
  *
  * Hugging Face issues personal User Access Tokens from the account settings,
  * and a token's value is revealed exactly once at creation time (like Linear).
- * We sign the user into huggingface.co, create a fresh read-only token on their
- * behalf, and read its value from the one-time reveal dialog.
+ * We sign the user into huggingface.co, create a fresh **write** token on their
+ * behalf (a classic HF write token backs read + write + inference -- so a
+ * single minted token covers every Detent HF scope; a read token cannot back
+ * `-write-all`), and read its value from the one-time reveal dialog.
  *
  * Requests to the Hub API and the Inference router authenticate with a single
  * `Authorization: Bearer hf_...` header, so we store an AuthorizationBearer
@@ -26,8 +28,11 @@ const HF_ROUTER_BASE_URL = 'https://router.huggingface.co/';
 const HF_LOGIN_URL = 'https://huggingface.co/login';
 
 // Navigating here opens the "Create new Access Token" form preset to a
-// read-only token; the value is shown once in a dialog after creation.
-const HF_NEW_READ_TOKEN_URL = 'https://huggingface.co/settings/tokens/new?tokenType=read';
+// write-capable token (tokenType=write); the value is shown once in a dialog
+// after creation. A write token covers read + write + inference, so a single
+// mint covers every Detent HF scope (see docs/connector-build-playbook.md:
+// "the token's capability must cover every scope you grant").
+const HF_NEW_TOKEN_URL = 'https://huggingface.co/settings/tokens/new?tokenType=write';
 
 // Hub host, and the path prefixes served before the user is signed in. A
 // document response to the hub host on any *other* path only happens once login
@@ -75,8 +80,11 @@ class HuggingfaceServiceSession extends BrowserFollowupServiceSession {
     if (!page) {
       throw new LoginFailedError('No page available in browser context.');
     }
+    // Bring the login tab to the front before interacting: a backgrounded
+    // followup page can type into a sudo prompt or the wrong tab entirely.
+    await page.bringToFront();
 
-    await page.goto(HF_NEW_READ_TOKEN_URL);
+    await page.goto(HF_NEW_TOKEN_URL);
 
     // Give the token a recognizable name so the user can find and revoke it.
     const tokenName = this.generateAppName();

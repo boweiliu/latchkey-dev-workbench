@@ -69,6 +69,14 @@ hiccups, what's next, reflections, and future improvements.
    lesson: before declaring a revision satisfies a comment, open the file at
    the changed lines and read them cold.
 
+## Symptom -> fix map
+
+[`SYMPTOM-FIX-MAP.md`](SYMPTOM-FIX-MAP.md) is the paper trail that every
+symptom/hole in these entries has a concrete artifact fix in the shipped tree
+(or is explicitly marked as a deliberate non-fix). It records the exact
+`file:line` of each shipped fix. Read it if you want to verify that a lesson
+here is actually backed by code, not just narrative.
+
 ## Source and fidelity
 
 Each entry begins with a YAML metadata block recording where it came from and
