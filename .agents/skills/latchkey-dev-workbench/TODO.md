@@ -10,7 +10,7 @@
   agent can revoke-before-schema-change on its own instead of gating on the user.
   Motivating case: swapping a service's live scope schema (e.g. coarse `any` ->
   granular read/write) must remove the old grant first, or it dangles and bricks
-  the whole permission set. See `docs/huggingface-worklog.md`.
+  the whole permission set. See `docs/build-journal/02-huggingface-connector-build.md`.
 - **A `workbench teardown` command that removes a hot-mod.** Proving a connector
   live leaves residue in every uv-cache copy, the materialized gateway files,
   and the granted permission. Today none of that is cleaned up, so a durable

@@ -68,9 +68,10 @@ as its own step, **before** writing `services/<svc>.ts`:
 6. **Hot-mod the live gateway** — patch the compiled connector into the
    SIP-protected `Minds.app` bundle. The bridge's launchd helper **lacks** the
    App-Management TCC grant, so `cp`/`deskrun` directly into the bundle gets
-   "Operation not permitted." Run the patch+restart script in **Terminal.app via
-   `osascript`** (Terminal has the App-Management grant) — not a bridge-driven
-   tmux session — then reload with `restart_minds.sh`.
+   "Operation not permitted." Run the patch+restart inside **Terminal.app's
+   context** (Terminal has the grant) — either a tmux session started inside
+   Terminal.app (the "Terminal-backed tmux trick" PROGRESS.md describes) or
+   `osascript` into Terminal.app — then reload with `restart_minds.sh`.
 7. **Request → approve → verify** — request the scope, approve (browser login
    mints the sealed credential), then verify with `latchkey curl`. **File the
    request *after* the gateway has fully recovered from any restart, not
@@ -142,12 +143,14 @@ to `~/tmp/minds_data` (the file-sharing grant) then `deskrun cp`.
 - **Schema-before-grant, and revoke-before-schema-swap.** A grant referencing a
   missing/removed scope schema bricks every permission. To change a live scope,
   revoke the old grant first.
-- **SIP bundle writes need `osascript` into Terminal.app, not a bridge-driven
-  tmux.** The bridge's launchd helper lacks the App-Management TCC grant, so
-  `cp`/`deskrun` directly into `Minds.app` gets "Operation not permitted." Run
-  the patch+restart script in Terminal.app via `osascript` (Terminal has the
-  grant). An older version of this playbook said the bridge's Terminal-backed
-  tmux inherits App Management — it does not; that claim was the costly miss.
+- **SIP bundle writes need a Terminal.app context, not a bare `deskrun`/`cp`.**
+  The bridge's launchd helper lacks the App-Management TCC grant, so `cp`/
+  `deskrun` directly into `Minds.app` gets "Operation not permitted." Run the
+  patch+restart inside Terminal.app's context (Terminal has the grant): a
+  tmux session started inside Terminal.app (the "Terminal-backed tmux trick"
+  PROGRESS.md describes) or `osascript` into Terminal.app both work. The costly
+  miss is assuming a bridge-driven `cp`/`deskrun` inherits the grant -- it
+  does not; only a Terminal.app-context process does.
 - **A Minds restart wipes pending permission requests.** Filing a request right
   before a restart means it disappears and the mint silently fails (poll
   forever, no credential). File after the gateway has recovered.

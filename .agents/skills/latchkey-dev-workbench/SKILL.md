@@ -55,12 +55,13 @@ critical gotchas, and the reproducible procedure. This file is the quick index.
   catalog + schema from uv's cache on every boot; editing installed files reverts.
 - **`chflags`/immutability is a trap** -- it breaks uv provisioning on boot.
 - **SIP blocks writing `Minds.app`, and the bridge's launchd helper LACKS the
-  App-Management TCC grant** -- `cp`/`deskrun` directly into the bundle gets
-  "Operation not permitted." The reliable path is to run the patch+restart
-  script in **Terminal.app via `osascript`** (Terminal has the App-Management
-  grant), not a bridge-driven tmux session. (An older note here claimed the
-  bridge's Terminal-backed tmux inherits App Management; it does not -- that
-  was the costly miss.)
+  App-Management TCC grant** -- `cp`/`deskrun` run directly via the bridge get
+  "Operation not permitted." To write the bundle, the command must run inside
+  Terminal.app's context (Terminal has the grant): either a tmux session
+  started inside Terminal.app (the "Terminal-backed tmux trick" PROGRESS.md
+  describes) or `osascript` into Terminal.app. The costly miss was assuming a
+  bridge-driven `cp`/`deskrun` inherits the grant -- it does not; only a
+  Terminal.app-context process does.
 - **Scope selectors by accessible name, not bare `[role="dialog"]`.** A bare role
   can match a password-manager modal or a leftover dialog and hang strict mode.
 - **`read` scopes must include `HEAD`/`OPTIONS`, not just `GET`.** Download
