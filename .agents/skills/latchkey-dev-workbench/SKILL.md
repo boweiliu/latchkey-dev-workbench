@@ -98,6 +98,24 @@ critical gotchas, and the reproducible procedure. This file is the quick index.
   absolute paths; the workspace hook blocks `head`/`tail` even inside uploaded
   scripts; and `deskrun` times out after ~60s, so split long CI poll-loops into
   shorter calls.
+- **Prefer isolated-gateway e2e over hot-modding the workspace gateway.**
+  Stand up a throwaway gateway in `/tmp/lk-e2e` on a spare port
+  (`localhost:19890`), provide the scopes inline in `permissions.json`, verify
+  read/write boundaries there, then tear it down. No residue, nothing to brick
+  -- the hot-mod loop is for proving a connector loads in the *real* gateway;
+  e2e scope-enforcement checks belong in an isolated gateway (entry 07).
+- **Ship a data-driven scope coverage regression test.** Drive Detent's real
+  matcher over the service's full OpenAPI inventory (vendored as a fixture) and
+  assert each scope matches its independently computed intended set. This is
+  entry-01's Future Improvement #1, paid down in entry 07; it catches
+  `/ssh_credentials`-style lookalikes and read/write miscounts before the PR
+  ships.
+- **A raw bearer handed to the container bypasses Detent.** Keep the bearer
+  gateway-side; a connector that mints a short-lived token must store it in the
+  gateway, not hand it to the agent. `refreshCredentials` returning null means
+  "re-login required" (the defer-silent-refresh pattern for short-lived tokens);
+  do NOT hand the container the bearer to self-refresh -- it breaks per-request
+  enforcement (entry 06).
 - **Clear / re-mint a credential from the agent side (no Connectors UI).** The
   gateway's credential-store encryption key is NOT in the macOS Keychain -- it's a
   file at `~/.minds/latchkey/encryption_key` (0600), deliberately, to avoid a

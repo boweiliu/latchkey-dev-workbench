@@ -6,6 +6,21 @@ spelled out. Read this before starting a new connector. Two things it adds:
 selectors, and (2) a **here-vs-Mac execution split** so you know which side each
 step runs on.
 
+## Two connector patterns
+
+The worked examples (ngrok, HuggingFace) use the **mint-and-reveal** pattern:
+the connector drives a browser login, navigates to a "create token" page,
+creates the token, and scrapes its value from a one-time reveal dialog. The
+credential is long-lived and stored sealed in the gateway.
+
+A second pattern — **session-riding** (entry 06, DocuSign) — applies when the
+service has no long-lived token: store the user's web-session cookies, mint a
+short-lived bearer (e.g. 8h) from them by loading the app in a non-Chrome
+browser and capturing the `Authorization: Bearer` off the SPA's own calls.
+`refreshCredentials` returns null to mean "re-login required" (do NOT hand the
+container the bearer to self-refresh — it bypasses Detent). Modeled on the
+Slack connector.
+
 ---
 
 ## The step that's easy to skip: map the live web flow first (and classify the session type)
@@ -82,10 +97,25 @@ as its own step, **before** writing `services/<svc>.ts`:
    recording leaks the minted credential.
 8. **e2e test** — a real call that proves the point (a `POST` to the service's
    chat/completions or its canonical read endpoint). Have this ready from the
-   start; it's the definition of done, not an afterthought.
+   start; it's the definition of done, not an afterthought. **Prefer an
+   isolated throwaway gateway** (`/tmp/lk-e2e` on `localhost:19890`, scopes
+   inline in `permissions.json`) over hot-modding the workspace gateway -- no
+   residue, nothing to brick. Use the workspace-gateway hot-mod only to prove the
+   connector *loads* in the real gateway; scope-enforcement e2e (read vs write,
+   granular boundaries) belongs in the isolated gateway (entry 07).
 9. **Refine scopes** *(if warranted)* — method-based `read`/`write` is correct for
    a RESTful API; add a granular scope only for a distinct/costly action (e.g.
    isolate paid `inference`). Skip per-resource scopes. But:
+   - **Ship a data-driven scope coverage regression test.** Vendor the service's
+     full OpenAPI endpoint inventory as a fixture and drive Detent's real matcher
+     over all of it, asserting each scope matches its independently computed
+     intended set (0 side-effecting GETs, 0 read-only writes, lookalike paths like
+     `/ssh_credentials` correctly rejected). This is entry-01's Future
+     Improvement #1, paid down in entry 07; the tailscale PR's
+     `tailscaleOpenapiCoverage.test.ts` is the template.
+   - **Map granular scopes to the service's own OAuth scope taxonomy**, not its
+     role hierarchy (roles are a user-identity concept; OAuth scopes are the API
+     scope taxonomy). entry 07.
    - **The catalog exposes exactly one scope per service** (`additional_services`
      allows one scope per service), so multi-domain or multi-capability services
      use **one `<svc>-api` scope with method-constrained *permissions* under it**,
@@ -167,6 +197,26 @@ to `~/tmp/minds_data` (the file-sharing grant) then `deskrun cp`.
   calls `this.service.getAccount`, which a v2-modeled connector lacks, so the
   browser login mints the token and *then* throws `this.service.getAccount is not
   a function` — you get the mint, fail the save, and the credential never lands.
+- **A raw bearer handed to the container bypasses Detent.** Keep the bearer
+  gateway-side. A connector that mints a short-lived token (e.g. an 8h session
+  bearer from stored cookies) must store it in the gateway, not hand it to the
+  agent — a raw bearer in the container skips per-request enforcement.
+  `refreshCredentials` returning null means "re-login required" (the
+  defer-silent-refresh pattern for short-lived tokens); do NOT hand the container
+  the bearer to self-refresh (entry 06).
+- **Plain Chrome may be blocked; a non-Chrome browser (Fortress/Brave) mints.**
+  Some services block Chrome (headless AND headed) from their mint endpoint. The
+  bundled Fortress browser (or Brave on the Mac) mints fine. If a browser mint
+  fails with a blocked/forbidden response, try a non-Chrome Chromium (entry 06).
+- **`checkApiCredentials` must use a full URL, not a relative path.**
+  `runCapturedAsync` can't reach a relative path with no host — a relative
+  `checkUrl` returns invalid even for a valid token. Use the full
+  `https://api.<svc>.com/...` prefix. Unit tests with mocked curl don't catch
+  this; live-verify the built connector (entry 07).
+- **Self-review *before* replying to review comments.** Order: address feedback
+  → self-review (re-read the diff critically) → reply. Replying then
+  self-reviewing then correcting your own reply is churn a single careful
+  ordering avoids (entry 07).
 
 ## Dev-loop accelerators (worth setting up before the first mint)
 

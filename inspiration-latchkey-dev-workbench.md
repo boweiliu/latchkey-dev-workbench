@@ -244,10 +244,19 @@ later (remove it after proving live); scope selectors by accessible name not
 bare role; `read` must include `HEAD`/`OPTIONS` (download clients issue a HEAD
 before GET); some APIs do reads via POST; multi-domain services need a
 `pattern`/`enum` on `domain`; the token capability must cover every granted
-scope; check CI after opening PRs and run repo gates locally. The manifest's
-`include` list is unchanged (still just `.agents/skills/latchkey-dev-workbench`);
-this version documents contents the v3 manifest didn't list and folds in the
-new playbook + HF example.
+scope; check CI after opening PRs and run repo gates locally; **prefer
+isolated-gateway e2e over hot-modding the workspace gateway** (entry 07);
+**ship a data-driven scope coverage regression test** driving Detent's real
+matcher over the full OpenAPI inventory (entry 07); **a raw bearer handed to
+the container bypasses Detent** (entry 06); **session-riding connectors**
+(store cookies, mint short-lived bearer, `refreshCredentials` null = re-login,
+entry 06); plain Chrome may be blocked (use Fortress/Brave, entry 06);
+`checkApiCredentials` must use a full URL (entry 07); self-review before
+replying to review comments (entry 07); granular scopes from the service's OAuth
+taxonomy (entry 07). The manifest's `include` list is unchanged (still just
+`.agents/skills/latchkey-dev-workbench`); this version documents contents the
+v3 manifest didn't list and folds in the new playbook + HF example + the
+DocuSign/Tailscale journal entries.
 
 ## Adaptation history
 

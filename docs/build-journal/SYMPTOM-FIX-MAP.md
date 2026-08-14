@@ -129,6 +129,62 @@ for the skill, plus top-level files for the manifest).
 - [L05-F4] Detent schema materialization is restart-coupled
   - fix: NO SHIPPED FIX -- upstream detent/mngr ask.
 
+### Entry 06 -- DocuSign session-riding connector
+
+- [L06-1] session-riding connector pattern (store cookies, mint short-lived bearer)
+  - fix: SHIPPED -- `docs/connector-build-playbook.md:9-22` (the "Two connector patterns" section: mint-and-reveal vs session-riding; `refreshCredentials` null = re-login)
+- [L06-2] `refreshCredentials` returning null = "re-login required" (defer silent refresh)
+  - fix: SHIPPED -- `docs/connector-build-playbook.md:20`, `:204`; `SKILL.md:115`
+- [L06-3] a raw bearer handed to the container bypasses Detent (per-request enforcement)
+  - fix: SHIPPED -- `SKILL.md:113`; `docs/connector-build-playbook.md:200-206`
+- [L06-4] plain Chrome is blocked; a non-Chrome browser (Fortress/Brave) mints
+  - fix: SHIPPED -- `docs/connector-build-playbook.md:207-210`
+- [L06-5] `GIT_AUTHOR_NAME`/`GIT_COMMITTER_NAME` env overrides override repo-scoped git config
+  - fix: NO SHIPPED FIX -- operational (commit-authorship gotcha); not a connector-build lesson.
+- [L06-6] pre-trim prose before review (same lesson as entry 05)
+  - fix: SHIPPED -- `docs/connector-build-playbook.md:216` (self-review before replying)
+- [L06-7] gateway flapped mid-push (operational)
+  - fix: NO SHIPPED FIX -- operational recovery.
+- [L06-F1] base-hook for browser-at-refresh in latchkey (future improvement)
+  - fix: NO SHIPPED FIX -- upstream latchkey ask.
+- [L06-F2] gateway->container mint delegation (future improvement)
+  - fix: NO SHIPPED FIX -- upstream design ask.
+- [L06-F3] meta-test timeouts (same as entry 05)
+  - fix: NO SHIPPED FIX -- upstream latchkey test.
+
+### Entry 07 -- Tailscale connector and isolated-gateway e2e
+
+- [L07-1] data-driven scope coverage regression test (drive Detent's real matcher over the full OpenAPI inventory)
+  - fix: SHIPPED -- `SKILL.md:107`; `docs/connector-build-playbook.md:109-116` (step 9 refine-scopes); references entry 07's `tailscaleOpenapiCoverage.test.ts` as the template. The fixture/test itself lives upstream (detent #28), not in this workbench.
+- [L07-2] isolated-gateway e2e (throwaway `/tmp/lk-e2e`, not hot-mod)
+  - fix: SHIPPED -- `SKILL.md:101`; `docs/connector-build-playbook.md:96-100` (step 8 e2e test: prefer isolated-gateway over hot-mod)
+- [L07-3] self-review before replying to review comments
+  - fix: SHIPPED -- `docs/connector-build-playbook.md:216`
+- [L07-4] `checkApiCredentials` must use a full URL, not a relative path
+  - fix: SHIPPED -- `docs/connector-build-playbook.md:211-213`
+- [L07-5] granular scopes mapped to the service's own OAuth scope taxonomy (not role hierarchy)
+  - fix: SHIPPED -- `docs/connector-build-playbook.md:116-118`
+- [L07-6] `getAccount` returns a meaningful identifier (tailnet) -- multi-credential pattern
+  - fix: SHIPPED (example) -- `services/huggingface.ts:132-133` (`getAccount` returns null; the tailscale connector (upstream latchkey#123) returns the tailnet). The pattern is documented in the playbook's "Two connector patterns" section.
+- [L07-7] OAuth-client vs API-access-token decision (design)
+  - fix: NO SHIPPED FIX -- a per-service design decision; the playbook's "Two connector patterns" section covers the two credential shapes, not the OAuth-vs-token choice (which is service-specific).
+- [L07-8] recordings blacklist with paper-trail comment
+  - fix: SHIPPED (doc) -- `SKILL.md:77` (already from the prior pass)
+- [L07-9] `check-changelog` CI gate (mngr-internal)
+  - fix: SHIPPED (doc) -- `docs/connector-build-playbook.md:144` (already from the prior pass)
+- [L07-10] no `deskrun` doc exists (the fuller process lives in session 195)
+  - fix: SHIPPED -- `docs/connector-build-playbook.md` IS the doc (this playbook, built from session 195 + the journals).
+- [L07-F1] exhaustive matcher check for every service (not just tailscale)
+  - fix: NO SHIPPED FIX -- upstream detent ask; the tailscale test is the template, the pattern is documented.
+- [L07-F2] gateway self-heal / safe-mode (same as entry 01)
+  - fix: NO SHIPPED FIX -- upstream detent/mngr ask.
+- [L07-F3] `workbench teardown` command (same as entry 01)
+  - fix: NO SHIPPED FIX -- `TODO.md:14` (tracked TODO).
+- [L07-F4] capture dashboard raw network calls to prove it uses the public API
+  - fix: NO SHIPPED FIX -- low-priority investigation.
+- [L07-F5] OAuth-client connector follow-up (`tailscale-oauth`)
+  - fix: NO SHIPPED FIX -- future connector; not in this workbench.
+
 ---
 
 ## Summary of gaps found by this pass
@@ -138,6 +194,14 @@ for the skill, plus top-level files for the manifest).
   worked example mints a read token. Fixed by switching `tokenType=read` ->
   `tokenType=write` and `HF_NEW_READ_TOKEN_URL` -> `HF_NEW_TOKEN_URL` (and adding
   `page.bringToFront()` for the L05-4 lesson) in the same push that adds this file.
+
+- **Entries 06 + 07 (latchkey): 9 new lessons missing from the skill.** All 9
+  folded in this push: isolated-gateway e2e (`SKILL.md:101`), data-driven scope
+  coverage test (`SKILL.md:107`), bearer-out breaks Detent (`SKILL.md:113`),
+  refreshCredentials null (`SKILL.md:115`), session-riding pattern
+  (`connector-build-playbook.md:9-22`), Chrome-blocked/Fortress-mints
+  (`:207`), checkApiCredentials full URL (`:211`), self-review before replying
+  (`:216`), OAuth scope taxonomy (`:116`).
 
 All other symptoms either have a shipped artifact fix (code, config, or shipped
 instruction) recorded above, or are deliberate non-fixes (upstream asks,
