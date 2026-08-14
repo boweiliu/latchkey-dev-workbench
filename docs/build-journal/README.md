@@ -69,6 +69,25 @@ hiccups, what's next, reflections, and future improvements.
    lesson: before declaring a revision satisfies a comment, open the file at
    the changed lines and read them cold.
 
+6. **[06 — DocuSign session-riding connector](06-docusign-session-riding-connector.md)**
+   A second connector pattern beyond mint-and-reveal: **session-riding** (store
+   the user's web-session cookies, mint the short-lived 8h bearer from them,
+   modeled on Slack). The hard part is the refresh: handing the container the
+   bearer **breaks Detent** (a raw bearer bypasses per-request enforcement), so
+   `refreshCredentials` returns null to mean "re-login required" and the 30-day
+   silent refresh is deferred. Plain Chrome is blocked; a non-Chrome browser
+   (Fortress/Brave) mints. E2e sent a real envelope through the live gateway.
+
+7. **[07 — Tailscale connector and isolated-gateway e2e](07-tailscale-connector-and-isolated-gateway-e2e.md)**
+   The full session-195 hardening loop applied. Two new patterns: (a) a
+   **data-driven scope coverage regression test** driving Detent's real matcher
+   over the full 93-op OpenAPI inventory (session-195's Future Improvement #1,
+   paid down); (b) **isolated-gateway e2e** — stand up a throwaway gateway in
+   `/tmp/lk-e2e` for e2e, NOT hot-modding the workspace gateway (the brick-lesson
+   alternative). Self-review before replying to review comments; `checkApiCredentials`
+   must use a full URL not a relative path; granular scopes mapped to the service's
+   own OAuth scope taxonomy.
+
 ## Symptom -> fix map
 
 [`SYMPTOM-FIX-MAP.md`](SYMPTOM-FIX-MAP.md) is the paper trail that every
