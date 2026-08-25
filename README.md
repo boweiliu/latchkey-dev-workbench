@@ -29,6 +29,14 @@ It is NOT the generic workspace template -- it is this specific project.
 ## What's inside
 
 - **Latchkey Dev Workbench** -- [`inspiration-latchkey-dev-workbench.md`](inspiration-latchkey-dev-workbench.md) (published now)
+- **DISCOVERY.md** -- start here if you're a fresh agent arriving on connector
+  work: the cross-repo map, the deskrun + git-proxy bootstrap recipes, and the
+  standing rules. Read it before the build procedure.
+- **docs/connector-build-procedure.md** -- the canonical build procedure (with
+  contingencies). **docs/connector-docs-to-read.md** the reading list.
+  **docs/connector-explained-layman.md** the layman explanation.
+- **docs/build-journal/** -- the worked history (ngrok, HuggingFace, OpenRouter,
+  DocuSign, Tailscale) + a symptom->fix map.
 
 Each `inspiration-<slug>.md` is the full manifest for that inspiration: what
 it is, how it works, the prerequisites it needs, and how to adapt it.

@@ -14,6 +14,11 @@ the way to a restart-durable connector.
 status, the exact changes, the desktop topology, what did and didn't work, the
 critical gotchas, and the reproducible procedure. This file is the quick index.
 
+If you're a fresh agent arriving on connector work (new workspace, vague task),
+read [`DISCOVERY.md`](../../../DISCOVERY.md) at the repo root first -- it's
+the cross-repo map and the deskrun + git-proxy bootstrap recipes that
+everything else hangs off of.
+
 ## The three layers a connector touches
 
 1. **Connector** -- a latchkey TypeScript `Service` (URL match, credential
