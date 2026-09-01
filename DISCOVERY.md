@@ -120,6 +120,23 @@ commands — deskrun is strictly simpler and already running.
 - **Probe first, plan second.** When a task touches the Mac/gateway, the first
   action is a ~1s `deskrun` probe (is the bridge alive? what version is
   installed?) — not after planning (session 210 process lesson).
+- **Check for a lock-file hash pin before hot-patching any Python package
+  file.** Some of Minds' bundled Python dependencies (e.g. `mngr_imbue_cloud`)
+  are not editable installs — they resolve from a bundled wheel that the
+  project's `uv.lock` pins by exact SHA-256 (`grep -B2 -A5 "<package>"
+  <project>/uv.lock` for a `hash = "sha256:..."` line). Editing the file's
+  bytes without also updating that pin doesn't silently revert on next sync —
+  it makes `uv sync`/`uv run --active` refuse to resolve at all, so the app
+  fails to *start*. Verifying zip integrity, byte content, and even a real
+  `uv pip install` acceptance test in isolation does NOT catch this; only
+  checking the lock file itself does. Before restarting the live app on any
+  such patch, dry-run `uv sync --project <path> --active` by hand FIRST while
+  the app is still running (it only touches the venv on disk, no restart
+  needed) — if it fails, you find out with zero live-app risk. Learned the
+  expensive way during e2e verification of mngr-internal PR #760: this exact
+  mistake bricked the live Minds app, and the operator had to manually
+  reinstall from source to recover, because the deskrun channel dies along
+  with the app it just broke.
 
 ## 5. The search playbook ("I suspect we've done/found this before")
 
