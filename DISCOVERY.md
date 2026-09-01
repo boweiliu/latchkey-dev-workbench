@@ -68,6 +68,22 @@ Mac's gateway is down; writing into the SIP-protected `Minds.app` bundle needs
 the **Terminal-backed `minds-deploy` tmux** (App Management TCC grant) — drive
 it via `deskrun 'tmux send-keys ...'`, never a bare `cp` (see the playbook).
 
+**Restarting Minds itself is a special case of "the channel dies while the
+Mac's gateway is down": every deskrun/file-sharing call is proxied through
+`minds-api-proxy`, which the Minds backend itself hosts (`127.0.0.1:53741`).
+Quitting Minds kills that proxy, so a *second* deskrun call to relaunch it has
+no channel to travel over.** Never split a Minds restart into two calls (quit,
+then relaunch). Use the existing `restart_minds.sh` (on the Mac at
+`~/tmp/minds_data/restart_minds.sh`) in ONE deskrun call — it force-quits
+(`killall -9`, since a graceful quit can hang on an undismissable confirmation
+dialog), waits for the process to actually die, then loops on `open -a Minds`
+with retries until a process reappears, all locally on the Mac with no
+round-trip back to the container in between. By the time the script finishes
+and print-bridge reports completion, the gateway is already back up. Learned
+the expensive way during e2e testing of mngr-internal PR #760: an agent split
+the restart into two calls, stranded itself with no channel, and needed the
+operator to manually relaunch the app.
+
 **Do NOT** reach for `minds-api`/SSH to another workspace just to run Mac
 commands — deskrun is strictly simpler and already running.
 
